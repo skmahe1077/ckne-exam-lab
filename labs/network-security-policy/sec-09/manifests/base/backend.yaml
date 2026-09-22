@@ -1,0 +1,29 @@
+# Always-correct supporting objects: the backend Service (DNS target the
+# Certificate will request a keypair for) and the backend-identity
+# ServiceAccount, which already exists but is not yet used by any Pod —
+# wiring backend-workload to use it is Part B of the task.
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: ${NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend-identity
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"

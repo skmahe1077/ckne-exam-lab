@@ -1,0 +1,14 @@
+# Reference fix (1/2): namespace-scoped PeerAuthentication (no selector ->
+# applies to every workload in ckne-sec-10 only, never mesh-wide). STRICT
+# means the sidecar rejects any inbound connection that isn't mTLS.
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: ckne-sec-10-strict-mtls
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  mtls:
+    mode: STRICT

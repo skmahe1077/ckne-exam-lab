@@ -1,0 +1,73 @@
+# Always-correct supporting objects: a "web" backend serving distinct,
+# identifiable content, plus its ClusterIP Service. Neither is broken or
+# part of the fix — the task is to author the Gateway and HTTPRoute that
+# expose this Service, which do not exist yet.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-content
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  index.html: |
+    svc09-backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: content
+          configMap:
+            name: web-content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

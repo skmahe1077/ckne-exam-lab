@@ -1,0 +1,104 @@
+# allowed-svc and blocked-svc are two identical nginx targets. The task
+# requires egress to allowed-svc (and DNS) to work, while blocked-svc must
+# remain unreachable.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: allowed-target
+  namespace: ${NAMESPACE}
+  labels:
+    app: allowed-target
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: allowed-target
+  template:
+    metadata:
+      labels:
+        app: allowed-target
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: allowed-svc
+  namespace: ${NAMESPACE}
+  labels:
+    app: allowed-target
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: allowed-target
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blocked-target
+  namespace: ${NAMESPACE}
+  labels:
+    app: blocked-target
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blocked-target
+  template:
+    metadata:
+      labels:
+        app: blocked-target
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blocked-svc
+  namespace: ${NAMESPACE}
+  labels:
+    app: blocked-target
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: blocked-target
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

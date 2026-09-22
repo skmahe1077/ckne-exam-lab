@@ -1,0 +1,23 @@
+# Reference solution: a ReferenceGrant, created in the BACKEND namespace
+# (${BACKEND_NAMESPACE}), permitting HTTPRoutes in ${NAMESPACE} to
+# reference Service "backend" in this namespace. Without this object, the
+# HTTPRoute's cross-namespace backendRef is rejected regardless of how
+# correctly the HTTPRoute itself is written — the grant must live in the
+# TARGET namespace (the one being referenced INTO), not the source.
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-svc10-httproutes
+  namespace: ${BACKEND_NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: ${NAMESPACE}
+  to:
+    - group: ""
+      kind: Service
+      name: backend

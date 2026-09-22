@@ -1,0 +1,30 @@
+# Reference fix: a single CiliumNetworkPolicy combining L3/L4 identity
+# selection (fromEndpoints: app=caller) with an L7 HTTP rule (only GET
+# /health). Once this CiliumNetworkPolicy selects backend for Ingress,
+# backend becomes default-deny for ingress: outsider (not matching
+# fromEndpoints at all) is blocked at L3/L4, and caller issuing anything
+# other than GET /health is blocked at L7 by Cilium's embedded Envoy proxy.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: backend-l7-http
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  endpointSelector:
+    matchLabels:
+      app: backend
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: caller
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+          rules:
+            http:
+              - method: "GET"
+                path: "/health"

@@ -1,0 +1,16 @@
+# Reference fix: JAEGER_COLLECTOR_PORT corrected to 9411 (Jaeger's
+# Zipkin-v2-compatible HTTP JSON ingest port). This is the only change
+# required — the discovered Service names were always correct.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trace-reporter-config
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  JAEGER_QUERY_SVC: "${JAEGER_QUERY_SVC}"
+  JAEGER_QUERY_PORT: "16686"
+  JAEGER_COLLECTOR_SVC: "${JAEGER_COLLECTOR_SVC}"
+  JAEGER_COLLECTOR_PORT: "9411"

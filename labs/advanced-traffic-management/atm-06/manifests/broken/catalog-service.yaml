@@ -1,0 +1,23 @@
+# Intentionally incomplete (a "make it ClusterMesh-ready" task, not an
+# outage): the catalog Service routes normally within THIS cluster — it is
+# missing the Cilium ClusterMesh "service.cilium.io/global" annotation. In a
+# real multi-cluster mesh, that annotation is what makes Cilium discover and
+# load-balance to this Service's backends from other connected clusters. See
+# this lab's concept.md/task.md for the explicit single-cluster scope
+# limitation — this environment cannot test actual cross-cluster discovery.
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog
+  namespace: ${NAMESPACE}
+  labels:
+    app: catalog
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: catalog
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

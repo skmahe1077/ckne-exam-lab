@@ -1,0 +1,13 @@
+# Reference fix: CLIENT_TIMEOUT_SECONDS raised to a reasonable margin above
+# the backend's real ~3s processing time (a fixed, hardcoded sleep — not
+# something this lab asks you to change). This is the only change required.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: client-config
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  CLIENT_TIMEOUT_SECONDS: "6"

@@ -1,0 +1,23 @@
+# Reference fix: prometheus.io/port corrected to 8080 (the port the
+# container's /metrics endpoint actually listens on). This is the only
+# change required.
+apiVersion: v1
+kind: Service
+metadata:
+  name: netmetrics
+  namespace: ${NAMESPACE}
+  labels:
+    app: netmetrics
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8080"
+spec:
+  selector:
+    app: netmetrics
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

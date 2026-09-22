@@ -1,0 +1,51 @@
+# client-a and client-b are pinned (via nodeName, substituted by setup.sh) to
+# two different worker nodes, so their real Pod IPs fall into two different
+# node Pod-CIDR sub-ranges. This is what makes an ipBlock/except test
+# deterministic without hardcoding any Pod IP.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client-a
+  namespace: ${NAMESPACE}
+  labels:
+    role: client
+    client: a
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  nodeName: ${NODE_A}
+  containers:
+    - name: shell
+      image: busybox:1.36
+      command: ["sh", "-c", "sleep 3600"]
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client-b
+  namespace: ${NAMESPACE}
+  labels:
+    role: client
+    client: b
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  nodeName: ${NODE_B}
+  containers:
+    - name: shell
+      image: busybox:1.36
+      command: ["sh", "-c", "sleep 3600"]
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi

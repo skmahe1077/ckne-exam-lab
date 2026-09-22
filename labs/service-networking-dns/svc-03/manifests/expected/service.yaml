@@ -1,0 +1,24 @@
+# Reference: a correctly configured LoadBalancer Service for the "shop"
+# Deployment. On this bare-kubeadm cluster there is no cloud provider
+# integration / LoadBalancer controller watching Services, so
+# status.loadBalancer.ingress will never populate and EXTERNAL-IP stays
+# <pending> forever — that is expected, not a defect in this manifest. The
+# Service still gets a ClusterIP and a nodePort, and routes traffic
+# correctly through both.
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop
+  namespace: ${NAMESPACE}
+  labels:
+    app: shop
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  type: LoadBalancer
+  selector:
+    app: shop
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

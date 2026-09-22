@@ -1,0 +1,35 @@
+# Always-correct starting state: the catalog Deployment itself is healthy and
+# is not part of this task — only its Service's ClusterMesh annotation is.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog
+  namespace: ${NAMESPACE}
+  labels:
+    app: catalog
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog
+  template:
+    metadata:
+      labels:
+        app: catalog
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: catalog
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

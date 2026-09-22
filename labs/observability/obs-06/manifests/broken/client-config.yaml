@@ -1,0 +1,18 @@
+# Intentionally broken: CLIENT_TIMEOUT_SECONDS is set far tighter (1s) than
+# backend's real, legitimate processing time (~3s, see DELAY_SECONDS on the
+# backend Deployment). Every request the client makes aborts before backend
+# ever finishes — from the network's point of view this looks exactly like
+# a lost/dropped connection (the client tears down the TCP connection with
+# a RST before any response arrives), even though nothing was actually
+# dropped: the backend was still working, just slower than the client was
+# willing to wait.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: client-config
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  CLIENT_TIMEOUT_SECONDS: "1"

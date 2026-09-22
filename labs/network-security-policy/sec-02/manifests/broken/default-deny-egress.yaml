@@ -1,0 +1,17 @@
+# Intentional starting state: default-deny-egress selects the client Pod and
+# blocks ALL outbound traffic, including DNS lookups to CoreDNS. The task is
+# to ADD scoped egress-allow rules — not to remove this policy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: client
+  policyTypes:
+    - Egress

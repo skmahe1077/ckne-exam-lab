@@ -1,0 +1,36 @@
+# Intentionally broken: an initContainer runs once at Pod startup and adds
+# an OUTPUT DROP rule to this Pod's OWN iptables (its own network
+# namespace only — no node-level state is touched). The main container
+# starts up fine and is Ready, but its outbound tcp/80 traffic is silently
+# dropped by a rule already sitting in its own netns.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toolbox
+  namespace: ${NAMESPACE}
+  labels:
+    app: toolbox
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  initContainers:
+    - name: break-network
+      image: nicolaka/netshoot:latest
+      command: ["sh", "-c", "iptables -A OUTPUT -p tcp --dport 80 -j DROP"]
+      securityContext:
+        capabilities:
+          add: ["NET_ADMIN", "NET_RAW"]
+  containers:
+    - name: toolbox
+      image: nicolaka/netshoot:latest
+      command: ["sh", "-c", "sleep 3600"]
+      securityContext:
+        capabilities:
+          add: ["NET_ADMIN", "NET_RAW"]
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi

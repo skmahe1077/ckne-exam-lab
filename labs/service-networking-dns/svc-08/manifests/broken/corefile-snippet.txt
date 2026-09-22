@@ -1,0 +1,4 @@
+svc08test.example:53 {
+    errors
+    forward . 203.0.113.53
+}

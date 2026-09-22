@@ -1,0 +1,28 @@
+# Secrets and credentials — never commit these
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+cluster.env
+kubeconfig*
+*.token
+state/secrets/
+
+# Local lab/cluster runtime artifacts
+kubeadm-setup/config/cluster.env
+kubeadm-setup/.join-command
+kubeadm-setup/*.kubeconfig
+.instance-ids
+.lab-state/
+mock-exams/*/.exam-state/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+.idea/
+.vscode/
+.claude/
+
+# Unrelated local scratch content (not part of this repository's history)
+kubeadm-setup/sample-devops-agent-eks-workshop/

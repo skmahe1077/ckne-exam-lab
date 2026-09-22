@@ -1,0 +1,38 @@
+# Always-correct supporting object: a 3-replica StatefulSet whose governing
+# Service is named "web" (spec.serviceName). This object is never the thing
+# that's broken in this lab — the Service in manifests/broken/ is.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  serviceName: web
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

@@ -1,0 +1,39 @@
+# Intentionally broken: nodeSelector references a node label that does not
+# exist anywhere in the cluster, so the scheduler can never place these
+# Pods. This is deliberately NOT a Cilium/CNI defect — the task requires
+# first confirming Cilium itself is healthy, then finding the real cause.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      nodeSelector:
+        disktype: ssd
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

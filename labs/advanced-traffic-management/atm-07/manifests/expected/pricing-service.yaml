@@ -1,0 +1,24 @@
+# Reference fix: service.cilium.io/affinity corrected to "local" — Cilium
+# will load-balance across healthy LOCAL backends first, and only route to a
+# remote cluster's backends if every local backend becomes unhealthy.
+# global/shared were already correct and unchanged.
+apiVersion: v1
+kind: Service
+metadata:
+  name: pricing
+  namespace: ${NAMESPACE}
+  labels:
+    app: pricing
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+  annotations:
+    service.cilium.io/global: "true"
+    service.cilium.io/shared: "true"
+    service.cilium.io/affinity: "local"
+spec:
+  selector:
+    app: pricing
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

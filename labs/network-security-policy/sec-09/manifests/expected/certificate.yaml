@@ -1,0 +1,32 @@
+# Reference fix (Part A): a namespace-scoped self-signed Issuer (NOT a
+# ClusterIssuer — stays fully contained inside ckne-sec-09, no shared-
+# resource lock needed) plus a Certificate that mints a real TLS Secret for
+# the backend Service.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: ckne-sec-09-issuer
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: backend-cert
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  secretName: backend-tls
+  commonName: backend.${NAMESPACE}.svc.cluster.local
+  dnsNames:
+    - backend.${NAMESPACE}.svc.cluster.local
+  issuerRef:
+    name: ckne-sec-09-issuer
+    kind: Issuer
+    group: cert-manager.io

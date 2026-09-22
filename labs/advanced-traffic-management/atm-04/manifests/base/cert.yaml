@@ -1,0 +1,36 @@
+# Always-correct: a namespace-scoped self-signed Issuer (NOT a
+# ClusterIssuer — this stays fully contained inside ckne-atm-04, needs no
+# shared-resource lock, and is removed automatically when the namespace is
+# deleted) plus a Certificate that mints a TLS Secret for the Gateway to
+# reference. cert-manager itself is a shared, cluster-level installation
+# (installed once by kubeadm-setup/install-addons.sh) — this lab only ever
+# creates its own uniquely-named, namespaced Issuer/Certificate, never a
+# cluster-scoped Issuer/ClusterIssuer.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: ckne-atm-04-selfsigned-issuer
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ckne-atm-04-cert
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  secretName: ckne-atm-04-tls
+  commonName: atm04.ckne.local
+  dnsNames:
+    - atm04.ckne.local
+  issuerRef:
+    name: ckne-atm-04-selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io

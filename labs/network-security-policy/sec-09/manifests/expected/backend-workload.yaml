@@ -1,0 +1,36 @@
+# Reference fix: the only change is adding spec.serviceAccountName so Pods
+# run under backend-identity instead of the implicit default ServiceAccount.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-workload
+  namespace: ${NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      serviceAccountName: backend-identity
+      containers:
+        - name: backend
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

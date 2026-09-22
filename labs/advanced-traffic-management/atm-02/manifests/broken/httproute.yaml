@@ -1,0 +1,25 @@
+# Starting state: this HTTPRoute only ever sends traffic to the "stable"
+# backend. The task is to add a header-based rule so requests carrying
+# "X-Canary: true" are routed to the "canary" backend instead, while every
+# other request keeps going to "stable".
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: header-routes
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  parentRefs:
+    - name: atm-gw
+  hostnames:
+    - app.ckne.local
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: stable
+          port: 80

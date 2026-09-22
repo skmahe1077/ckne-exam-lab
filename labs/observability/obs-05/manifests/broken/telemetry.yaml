@@ -1,0 +1,19 @@
+# Intentionally broken: this Telemetry resource is meant to turn on Envoy
+# access logging for every workload in this namespace, using Istio's
+# built-in "envoy" provider (pre-registered in every Istio install — no
+# cluster-wide meshConfig.extensionProviders change needed, which is why
+# this namespaced object alone is enough and no shared-resource lock is
+# required). The provider name is typo'd ("envoy-log" does not exist), so
+# no access logging is actually enabled yet.
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: access-logging
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  accessLogging:
+    - providers:
+        - name: envoy-log

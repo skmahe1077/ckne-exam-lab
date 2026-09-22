@@ -1,0 +1,108 @@
+# Always-correct supporting infrastructure for this lab: a tiny, self-hosted
+# authoritative resolver living entirely inside the student's own namespace.
+# It answers exactly one deterministic record —
+#   check.svc08test.example -> 10.99.99.99
+# — for the fictional test zone `svc08test.example.`. The task is to make
+# the SHARED kube-system/coredns Corefile forward queries for that zone to
+# this Service, instead of relying on flaky outbound internet access to a
+# real public resolver (e.g. 8.8.8.8), which this lab environment may not
+# have egress to. This object is never what the student needs to fix.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-dns-corefile
+  namespace: ${NAMESPACE}
+  labels:
+    app: test-dns
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  Corefile: |
+    svc08test.example:53 {
+        hosts {
+            10.99.99.99 check.svc08test.example
+            fallthrough
+        }
+        errors
+        log
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-dns
+  namespace: ${NAMESPACE}
+  labels:
+    app: test-dns
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-dns
+  template:
+    metadata:
+      labels:
+        app: test-dns
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: coredns
+          image: ${COREDNS_IMAGE}
+          args: ["-conf", "/etc/coredns/Corefile"]
+          ports:
+            - name: dns-udp
+              containerPort: 53
+              protocol: UDP
+            - name: dns-tcp
+              containerPort: 53
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/coredns
+              readOnly: true
+          readinessProbe:
+            tcpSocket:
+              port: 53
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 53
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: config
+          configMap:
+            name: test-dns-corefile
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-dns
+  namespace: ${NAMESPACE}
+  labels:
+    app: test-dns
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: test-dns
+  ports:
+    - name: dns-udp
+      port: 53
+      targetPort: 53
+      protocol: UDP
+    - name: dns-tcp
+      port: 53
+      targetPort: 53
+      protocol: TCP

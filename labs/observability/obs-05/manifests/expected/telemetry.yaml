@@ -1,0 +1,14 @@
+# Reference fix: provider name corrected to Istio's built-in "envoy"
+# provider. This is the only change required.
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: access-logging
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  accessLogging:
+    - providers:
+        - name: envoy

@@ -1,0 +1,21 @@
+# Always-correct: the namespaced Gateway itself. It references the shared,
+# cluster-wide GatewayClass "cilium" (installed once by
+# kubeadm-setup/install-addons.sh) by name only — this lab never creates or
+# edits a GatewayClass.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: atm-08-gw
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same

@@ -1,0 +1,26 @@
+# Reference fix. ${NODE_B_CIDR} is cluster-specific and dynamic (it is the
+# Pod CIDR sub-range kubelet/CNI assigned to whichever node client-b was
+# scheduled on for this run) — look it up yourself with:
+#   kubectl -n ${NAMESPACE} get configmap node-cidrs -o jsonpath='{.data.node-b-cidr}'
+# and substitute the literal value before applying; this file is reference
+# documentation only, not applied by any script.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restrict-backend-ingress
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.244.0.0/16
+            except:
+              - ${NODE_B_CIDR}

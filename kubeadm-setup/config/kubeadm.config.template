@@ -1,0 +1,61 @@
+# kubeadm ClusterConfiguration template.
+#
+# This file is never used directly — cluster-bootstrap.sh renders it with
+# `envsubst` after discovering the control plane's private IP at runtime, and
+# uploads the rendered file to the control-plane node. Do not hard-code an
+# advertiseAddress/controlPlaneEndpoint here; the values below are
+# substituted from shell environment variables set by cluster-bootstrap.sh:
+#
+#   ADVERTISE_ADDRESS      private IPv4 of the control-plane node
+#   CONTROL_PLANE_ENDPOINT ADVERTISE_ADDRESS:6443
+#   NODE_NAME               control-plane instance's hostname
+#   KUBERNETES_VERSION_FULL e.g. 1.35.0
+#   POD_CIDR
+#   SERVICE_CIDR
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: "${ADVERTISE_ADDRESS}"
+  bindPort: 6443
+nodeRegistration:
+  name: "${NODE_NAME}"
+  kubeletExtraArgs:
+    - name: "node-ip"
+      value: "${ADVERTISE_ADDRESS}"
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: "v${KUBERNETES_VERSION_FULL}"
+controlPlaneEndpoint: "${CONTROL_PLANE_ENDPOINT}"
+apiServer:
+  extraArgs:
+    - name: "enable-admission-plugins"
+      value: "NodeRestriction"
+    - name: "audit-log-path"
+      value: "/var/log/kubernetes/audit.log"
+controllerManager:
+  extraArgs:
+    - name: "node-cidr-mask-size"
+      value: "24"
+scheduler:
+  extraArgs:
+    - name: "leader-elect"
+      value: "true"
+networking:
+  podSubnet: "${POD_CIDR}"
+  serviceSubnet: "${SERVICE_CIDR}"
+  dnsDomain: "cluster.local"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: "systemd"
+syncFrequency: "1m"
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: "iptables"
+conntrack:
+  maxPerCore: 32768
+  min: 131072
+  tcpCloseWaitTimeout: "1h"
+  tcpEstablishedTimeout: "24h"

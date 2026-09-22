@@ -1,0 +1,30 @@
+# Reference fix: the offending iptables OUTPUT DROP rule for tcp/80 is
+# removed from the toolbox Pod's own network namespace. This is achieved
+# imperatively at runtime (see solution.md — `kubectl exec ... iptables -D
+# OUTPUT ...`), not by re-applying this manifest; this file documents what
+# the Pod spec would look like if the bad rule had never been injected in
+# the first place (no break-network initContainer).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: toolbox
+  namespace: ${NAMESPACE}
+  labels:
+    app: toolbox
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  containers:
+    - name: toolbox
+      image: nicolaka/netshoot:latest
+      command: ["sh", "-c", "sleep 3600"]
+      securityContext:
+        capabilities:
+          add: ["NET_ADMIN", "NET_RAW"]
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi

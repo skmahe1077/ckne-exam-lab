@@ -1,0 +1,28 @@
+# Intentionally broken: the "https" listener's certificateRefs points at
+# the Certificate object's name ("ckne-atm-04-cert") instead of the Secret
+# it actually produces ("ckne-atm-04-tls", per manifests/base/cert.yaml's
+# spec.secretName). A certificateRef must name a Secret, not a Certificate
+# — this is a common real-world mix-up. Because that Secret does not exist,
+# Cilium cannot resolve the reference and TLS never actually terminates.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: atm-gw
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: ckne-atm-04-cert
+      allowedRoutes:
+        namespaces:
+          from: Same

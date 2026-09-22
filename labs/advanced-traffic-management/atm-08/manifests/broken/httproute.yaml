@@ -1,0 +1,43 @@
+# Intentionally incomplete (not a full outage — every path already routes to
+# the right backend): the /slow rule has NO request timeout configured. The
+# streaming-echo backend's /slow endpoint deliberately sleeps for several
+# seconds before responding, simulating a slow LLM completion — without a
+# bounded request timeout, a caller can be left hanging for the entire
+# backend delay with no limit, which is exactly what makes a naive
+# client-side "retry on slow response" policy dangerous (see concept.md: a
+# blind retry fired the moment a client gives up just stacks a second full
+# request onto a backend that's still mid-flight on the first one).
+#
+# The /stream and /health rules are already correct and must NOT gain a
+# timeout — /stream's chunked response legitimately takes several seconds to
+# fully arrive, and a timeout there would wrongly cut off a healthy,
+# in-progress stream.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: streaming-route
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  parentRefs:
+    - name: atm-08-gw
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /slow
+      backendRefs:
+        - name: streaming-echo
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /stream
+        - path:
+            type: PathPrefix
+            value: /health
+      backendRefs:
+        - name: streaming-echo
+          port: 80

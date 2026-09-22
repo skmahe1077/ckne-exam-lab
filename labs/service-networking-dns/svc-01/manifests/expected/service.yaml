@@ -1,0 +1,19 @@
+# Reference fix: the selector matches the "api" Deployment's Pod labels
+# (app: api), so the Service picks up healthy Endpoints and routes traffic.
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: ${NAMESPACE}
+  labels:
+    app: api
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  type: ClusterIP
+  selector:
+    app: api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

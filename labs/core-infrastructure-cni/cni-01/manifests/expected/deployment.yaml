@@ -1,0 +1,37 @@
+# Reference fix: remove the nodeSelector that matched no node. This is the
+# only change required — everything else about the Deployment is already
+# correct, including the CNI/networking configuration, which was never the
+# actual problem.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

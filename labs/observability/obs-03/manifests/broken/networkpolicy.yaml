@@ -1,0 +1,28 @@
+# Intentionally broken: the NetworkPolicy is meant to allow only Pods
+# labeled role=allowed (client-a) to reach web on port 80, and to deny
+# everything else (including client-b, labeled role=blocked). The selector
+# was written backwards: it currently allows role=blocked (client-b) and
+# denies role=allowed (client-a) — the exact opposite of the intent. Fix the
+# podSelector's matchLabels value so the right client is allowed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-policy
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: blocked
+      ports:
+        - protocol: TCP
+          port: 80

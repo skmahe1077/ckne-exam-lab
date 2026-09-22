@@ -1,0 +1,102 @@
+# Always-correct supporting objects: a small stdlib-only Python app
+# ("netmetrics") exposing /health, /hit (increments a counter), and
+# /metrics (Prometheus text exposition format, metric obs04_requests_total).
+# The app itself is never broken — only its Service's scrape annotations
+# (manifests/broken/netmetrics-service.yaml) are.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netmetrics-app
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  server.py: |
+    import http.server
+    import socketserver
+
+    COUNT = 0
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            global COUNT
+            if self.path == "/health":
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"ok\n")
+                return
+            if self.path == "/hit":
+                COUNT += 1
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(("hit %d\n" % COUNT).encode())
+                return
+            if self.path == "/metrics":
+                body = (
+                    "# HELP obs04_requests_total Total /hit requests received\n"
+                    "# TYPE obs04_requests_total counter\n"
+                    "obs04_requests_total %d\n" % COUNT
+                ).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; version=0.0.4")
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            self.send_response(404)
+            self.end_headers()
+
+        def log_message(self, fmt, *args):
+            print("%s - %s" % (self.address_string(), fmt % args))
+
+    socketserver.TCPServer.allow_reuse_address = True
+    with socketserver.ThreadingTCPServer(("0.0.0.0", 8080), Handler) as httpd:
+        httpd.serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netmetrics
+  namespace: ${NAMESPACE}
+  labels:
+    app: netmetrics
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netmetrics
+  template:
+    metadata:
+      labels:
+        app: netmetrics
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: netmetrics
+          image: python:3.12-slim
+          command: ["python3", "/app/server.py"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: app
+              mountPath: /app
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: app
+          configMap:
+            name: netmetrics-app

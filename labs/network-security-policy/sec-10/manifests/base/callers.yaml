@@ -1,0 +1,90 @@
+# Always-correct supporting objects: two ServiceAccounts and three caller
+# Pods. trusted-caller-sa is the only identity the AuthorizationPolicy will
+# allow. untrusted-caller-sa is a legitimate mesh identity (has a sidecar)
+# that must still be denied. no-mesh-caller explicitly opts OUT of sidecar
+# injection to simulate a plaintext, non-mesh caller.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trusted-caller-sa
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: untrusted-caller-sa
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: trusted-caller
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  serviceAccountName: trusted-caller-sa
+  containers:
+    - name: client
+      image: curlimages/curl:8.10.1
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: untrusted-caller
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  serviceAccountName: untrusted-caller-sa
+  containers:
+    - name: client
+      image: curlimages/curl:8.10.1
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: no-mesh-caller
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+  annotations:
+    sidecar.istio.io/inject: "false"
+spec:
+  serviceAccountName: untrusted-caller-sa
+  containers:
+    - name: client
+      image: curlimages/curl:8.10.1
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi

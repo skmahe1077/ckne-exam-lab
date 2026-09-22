@@ -1,0 +1,38 @@
+# Starting state: backend-workload does not set spec.serviceAccountName at
+# all, so its Pods silently run under the implicit "default" ServiceAccount
+# instead of the purpose-specific "backend-identity" that already exists.
+# No cert-manager Issuer/Certificate exists yet at all — that entire chain
+# is additive (Part A of the task).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-workload
+  namespace: ${NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: backend
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

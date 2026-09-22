@@ -1,0 +1,144 @@
+# Always-correct starting state: two independent backends ("blue" and
+# "green"), each serving a distinct, easily-identifiable response body so
+# validate.sh (and the student, via curl/wget) can prove which backend
+# actually answered a request. Neither backend nor the Gateway is the part
+# of this task that is broken — only the HTTPRoute objects are.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blue-content
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  index.html: |
+    blue-backend
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: green-content
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  index.html: |
+    green-backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blue
+  namespace: ${NAMESPACE}
+  labels:
+    app: blue
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blue
+  template:
+    metadata:
+      labels:
+        app: blue
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: content
+          configMap:
+            name: blue-content
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: green
+  namespace: ${NAMESPACE}
+  labels:
+    app: green
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: green
+  template:
+    metadata:
+      labels:
+        app: green
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: content
+          configMap:
+            name: green-content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blue
+  namespace: ${NAMESPACE}
+  labels:
+    app: blue
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: blue
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: green
+  namespace: ${NAMESPACE}
+  labels:
+    app: green
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: green
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

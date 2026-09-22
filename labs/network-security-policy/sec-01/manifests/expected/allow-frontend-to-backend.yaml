@@ -1,0 +1,26 @@
+# Reference fix: a second NetworkPolicy (NetworkPolicies on the same Pods are
+# additive/whitelist — this adds the one allowed path without touching the
+# default-deny policy) permitting ingress to backend only from Pods labeled
+# role=frontend, on TCP/80.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 80

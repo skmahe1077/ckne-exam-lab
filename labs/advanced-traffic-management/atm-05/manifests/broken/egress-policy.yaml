@@ -1,0 +1,31 @@
+# Intentionally broken: CiliumEgressGatewayPolicy is a CLUSTER-SCOPED CRD (no
+# metadata.namespace field), created uniquely-named by this lab so cleanup.sh
+# can delete it safely by exact name. Its namespaceSelector correctly targets
+# this lab's namespace (via the mandatory ckne.openai.com/lab-id namespace
+# label every lab namespace already carries), and destinationCIDRs/
+# egressGateway.nodeSelector are already correct — but the podSelector
+# targets "app: wrong-app", a label no Pod in this namespace carries. The
+# egress-client Deployment's Pods are labeled "app: egress-client", so the
+# policy currently selects zero Pods and nothing is redirected through the
+# designated gateway node.
+apiVersion: cilium.io/v2
+kind: CiliumEgressGatewayPolicy
+metadata:
+  name: ckne-atm-05-egress-policy
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selectors:
+    - podSelector:
+        matchLabels:
+          app: wrong-app
+      namespaceSelector:
+        matchLabels:
+          ckne.openai.com/lab-id: "${TASK_ID}"
+  destinationCIDRs:
+    - "1.1.1.1/32"
+  egressGateway:
+    nodeSelector:
+      matchLabels:
+        ckne.openai.com/atm-05-egress-node: "true"

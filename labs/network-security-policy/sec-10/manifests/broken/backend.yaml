@@ -1,0 +1,55 @@
+# Starting state: backend has NO PeerAuthentication and NO
+# AuthorizationPolicy yet, so — even though its sidecar is injected — it
+# currently accepts both plaintext and any mesh identity. Adding the
+# PeerAuthentication (STRICT mTLS) and AuthorizationPolicy (identity
+# allow-list) is the task.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ${NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: backend
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: ${NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

@@ -1,0 +1,36 @@
+# Always-correct starting state: the pricing Deployment itself is healthy and
+# is not part of this task — only its Service's ClusterMesh affinity
+# annotation is.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pricing
+  namespace: ${NAMESPACE}
+  labels:
+    app: pricing
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pricing
+  template:
+    metadata:
+      labels:
+        app: pricing
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: pricing
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

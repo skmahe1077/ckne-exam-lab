@@ -1,0 +1,54 @@
+# Always-correct supporting objects: the "web" Deployment + Service that
+# client-a and client-b (manifests/base/clients.yaml) generate traffic
+# towards. Neither web nor the clients are broken — only the NetworkPolicy
+# in manifests/broken/ is.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

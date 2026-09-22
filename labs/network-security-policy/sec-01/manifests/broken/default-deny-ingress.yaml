@@ -1,0 +1,16 @@
+# Intentional starting state: a default-deny-ingress NetworkPolicy that
+# selects every Pod in the namespace and blocks ALL ingress, including the
+# legitimate client-frontend Pod. The task is to ADD a scoped allow rule —
+# do not remove or replace this policy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

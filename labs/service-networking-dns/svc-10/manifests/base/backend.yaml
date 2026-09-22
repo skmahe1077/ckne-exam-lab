@@ -1,0 +1,73 @@
+# Always-correct supporting objects: a "backend" Deployment/Service living
+# in the SECOND namespace this lab owns (${BACKEND_NAMESPACE}), serving
+# distinct, identifiable content. Never touched by the fix — the fix is a
+# ReferenceGrant that must be created in this same namespace.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-content
+  namespace: ${BACKEND_NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  index.html: |
+    svc10-backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ${BACKEND_NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: backend
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: content
+          configMap:
+            name: backend-content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: ${BACKEND_NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

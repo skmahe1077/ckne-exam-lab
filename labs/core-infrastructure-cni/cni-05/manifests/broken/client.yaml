@@ -1,0 +1,31 @@
+# Intentionally broken: dnsPolicy is set to "None" with a custom dnsConfig
+# pointing at 192.0.2.53 — a TEST-NET-1 address (RFC 5737) that is
+# guaranteed to never answer. This overrides the cluster's normal DNS
+# resolution behaviour (dnsPolicy: ClusterFirst, which resolves in-cluster
+# names via CoreDNS) for this Pod only. CoreDNS itself is completely
+# unaffected and continues serving every other Pod in the cluster normally.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  namespace: ${NAMESPACE}
+  labels:
+    app: client
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  dnsPolicy: None
+  dnsConfig:
+    nameservers:
+      - 192.0.2.53
+  containers:
+    - name: client
+      image: busybox:1.36
+      command: ["sh", "-c", "sleep 3600"]
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi

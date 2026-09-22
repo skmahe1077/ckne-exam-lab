@@ -1,0 +1,22 @@
+# Intentionally incomplete: this ipBlock rule allows ingress from the whole
+# cluster Pod CIDR but does not yet carve out (except) client-b's node
+# sub-range, so client-b can currently reach backend when it should not be
+# able to. The task is to add the correct `except` entry.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restrict-backend-ingress
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.244.0.0/16

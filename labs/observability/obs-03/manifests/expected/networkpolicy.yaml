@@ -1,0 +1,25 @@
+# Reference fix: podSelector's matchLabels corrected to role=allowed, so
+# client-a (role=allowed) can reach web and client-b (role=blocked) cannot.
+# This is the only change required.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-policy
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: allowed
+      ports:
+        - protocol: TCP
+          port: 80

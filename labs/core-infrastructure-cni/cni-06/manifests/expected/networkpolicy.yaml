@@ -1,0 +1,29 @@
+# Reference fix: one NetworkPolicy, two ingress rules — one per simulated
+# "interface". The data-plane rule has no podSelector on its `from`, so it
+# allows any Pod in the namespace on port 8080. The mgmt-plane rule only
+# allows Pods labeled role=admin, on port 9090.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: multi-iface-per-port
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: multi-iface-app
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - podSelector:
+            matchLabels:
+              role: admin
+      ports:
+        - protocol: TCP
+          port: 9090

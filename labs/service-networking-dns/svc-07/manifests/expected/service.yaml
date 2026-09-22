@@ -1,0 +1,19 @@
+# Reference Service the student is expected to create. A plain ClusterIP
+# Service selecting the pre-existing `web` Deployment's Pods is all that is
+# required — kube-proxy does the rest by programming iptables rules for it.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

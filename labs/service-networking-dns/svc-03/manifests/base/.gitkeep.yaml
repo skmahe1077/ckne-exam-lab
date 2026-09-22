@@ -1,0 +1,4 @@
+# No always-correct supporting objects are needed for this lab beyond the
+# starting scaffold in manifests/broken/ — setup.sh does not apply anything
+# from this directory. Kept as a placeholder so the directory exists in
+# version control.

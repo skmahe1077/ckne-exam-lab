@@ -1,0 +1,143 @@
+# Always-correct starting state: a "stable" backend and a "canary" backend,
+# each serving a distinct, easily-identifiable response body. Neither
+# backend nor the Gateway is broken — only the HTTPRoute's backendRefs
+# weights are wrong.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stable-content
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  index.html: |
+    stable-response
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: canary-content
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  index.html: |
+    canary-response
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stable
+  namespace: ${NAMESPACE}
+  labels:
+    app: stable
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stable
+  template:
+    metadata:
+      labels:
+        app: stable
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: content
+          configMap:
+            name: stable-content
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canary
+  namespace: ${NAMESPACE}
+  labels:
+    app: canary
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: canary
+  template:
+    metadata:
+      labels:
+        app: canary
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: content
+              mountPath: /usr/share/nginx/html
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: content
+          configMap:
+            name: canary-content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stable
+  namespace: ${NAMESPACE}
+  labels:
+    app: stable
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: stable
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary
+  namespace: ${NAMESPACE}
+  labels:
+    app: canary
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: canary
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

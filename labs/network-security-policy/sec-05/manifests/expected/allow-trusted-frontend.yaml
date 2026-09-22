@@ -1,0 +1,30 @@
+# Reference fix: ONE from-list element carrying BOTH namespaceSelector and
+# podSelector — AND semantics. A source Pod must be in a namespace labeled
+# team=payments AND itself carry role=frontend. Two separate list elements
+# (one per selector) would instead mean OR, which is the mistake this lab
+# is designed to catch.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-trusted-frontend
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              team: payments
+          podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 80

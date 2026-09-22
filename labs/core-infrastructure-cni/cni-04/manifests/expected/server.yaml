@@ -1,0 +1,55 @@
+# Reference fix: the Service's targetPort is corrected to 80, matching the
+# port nginx actually listens on in the "web" container. Everything else is
+# unchanged.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: server
+  namespace: ${NAMESPACE}
+  labels:
+    app: server
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  containers:
+    - name: web
+      image: nginx:1.27
+      ports:
+        - containerPort: 80
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+    - name: debug
+      image: nicolaka/netshoot:latest
+      command: ["sh", "-c", "sleep 3600"]
+      securityContext:
+        capabilities:
+          add: ["NET_RAW"]
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+  namespace: ${NAMESPACE}
+  labels:
+    app: server
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

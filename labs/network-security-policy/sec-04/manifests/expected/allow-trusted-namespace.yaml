@@ -1,0 +1,27 @@
+# Reference fix: a NetworkPolicy allowing ingress to backend only from Pods
+# in namespaces carrying the label network-access=trusted — no podSelector
+# on the "from" side, so ANY Pod in a trusted namespace is allowed, but
+# untrusted-client (right namespace label missing) is not, regardless of
+# what label it carries.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-trusted-namespace
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network-access: trusted
+      ports:
+        - protocol: TCP
+          port: 80

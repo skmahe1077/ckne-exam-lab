@@ -1,0 +1,18 @@
+# Starting state: a default-deny-all-egress NetworkPolicy for every Pod in
+# the namespace. This part is already correct and must stay in place — the
+# task is to ADD a second NetworkPolicy that carves out DNS (UDP/TCP 53) to
+# kube-dns, without which Pods cannot resolve names at all (including
+# Service names inside this same namespace).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-egress
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress: []

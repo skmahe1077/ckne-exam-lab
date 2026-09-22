@@ -1,0 +1,4 @@
+svc08test.example:53 {
+    errors
+    forward . ${TEST_DNS_CLUSTERIP}
+}

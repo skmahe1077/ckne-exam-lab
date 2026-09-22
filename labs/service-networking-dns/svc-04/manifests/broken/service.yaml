@@ -1,0 +1,14 @@
+# Intentionally broken: externalName points at a domain that does not
+# exist, so CoreDNS's CNAME rewrite leads nowhere and any lookup of this
+# Service's DNS name fails with NXDOMAIN.
+apiVersion: v1
+kind: Service
+metadata:
+  name: docs
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  type: ExternalName
+  externalName: kubernetes-docs.invalid.nonexistent-ckne-lab-domain.test

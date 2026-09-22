@@ -1,0 +1,46 @@
+# Always-correct supporting objects. "caller" is the only identity meant to
+# ever reach backend (and even then, only GET /health once the
+# CiliumNetworkPolicy is applied). "outsider" carries no special label and
+# must never reach backend on any path.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: caller
+  namespace: ${NAMESPACE}
+  labels:
+    app: caller
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  containers:
+    - name: client
+      image: curlimages/curl:8.10.1
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: outsider
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  containers:
+    - name: client
+      image: curlimages/curl:8.10.1
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: 20m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi

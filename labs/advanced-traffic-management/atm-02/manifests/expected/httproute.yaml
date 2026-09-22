@@ -1,0 +1,37 @@
+# Reference fix: an additional rule matching the "X-Canary: true" request
+# header, placed ahead of the catch-all rule. Gateway API rule precedence
+# gives a rule with a header match priority over a header-less rule at the
+# same path specificity, so this is safe regardless of list order — but
+# listing it first keeps the intent readable.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: header-routes
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  parentRefs:
+    - name: atm-gw
+  hostnames:
+    - app.ckne.local
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+          headers:
+            - type: Exact
+              name: X-Canary
+              value: "true"
+      backendRefs:
+        - name: canary
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: stable
+          port: 80

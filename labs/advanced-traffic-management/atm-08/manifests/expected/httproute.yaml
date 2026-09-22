@@ -1,0 +1,39 @@
+# Reference fix: the /slow rule now carries a bounded request timeout
+# (rules[].timeouts.request — a Standard-channel Gateway API v1 field, unlike
+# the retry field, which remains gated to the Experimental release channel
+# and is not installed in this cluster) shorter than the backend's /slow
+# delay used in this lab's validation (8s), so a stuck/slow backend call is
+# cut off predictably instead of hanging indefinitely. The /stream and
+# /health rules are untouched — they must keep running with no timeout so a
+# legitimately slow, healthy stream is never cut off mid-flight.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: streaming-route
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  parentRefs:
+    - name: atm-08-gw
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /slow
+      backendRefs:
+        - name: streaming-echo
+          port: 80
+      timeouts:
+        request: 3s
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /stream
+        - path:
+            type: PathPrefix
+            value: /health
+      backendRefs:
+        - name: streaming-echo
+          port: 80

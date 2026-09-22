@@ -1,0 +1,36 @@
+# Always-correct supporting objects: two Services, each fronting one of
+# multi-iface-app's two container ports — standing in for two separately
+# routable network attachments a real Multus secondary NIC would provide.
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-svc
+  namespace: ${NAMESPACE}
+  labels:
+    app: multi-iface-app
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: multi-iface-app
+  ports:
+    - name: data
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mgmt-svc
+  namespace: ${NAMESPACE}
+  labels:
+    app: multi-iface-app
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: multi-iface-app
+  ports:
+    - name: mgmt
+      port: 9090
+      targetPort: 9090

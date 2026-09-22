@@ -1,0 +1,29 @@
+# Intentionally broken: the shared Prometheus server's default
+# "kubernetes-service-endpoints" scrape job auto-discovers scrape targets
+# from Service annotations (prometheus.io/scrape, prometheus.io/port,
+# prometheus.io/path). The annotations are present, but prometheus.io/port
+# is wrong (9090 — nothing listens there); the container actually serves
+# /metrics on 8080. Prometheus's scrape of this target fails, so the
+# obs04_requests_total metric never appears in Prometheus at all — even
+# though normal Service traffic to the app (port 8080) works perfectly
+# fine, because the Service's real port/targetPort are correct.
+apiVersion: v1
+kind: Service
+metadata:
+  name: netmetrics
+  namespace: ${NAMESPACE}
+  labels:
+    app: netmetrics
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "9090"
+spec:
+  selector:
+    app: netmetrics
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

@@ -1,0 +1,21 @@
+# Mock Exam 3 — 20 tasks, exam difficulty (CNI 3 / SVC 5 / ATM 4 / SEC 5 / OBS 3)
+CNI-02
+CNI-03
+CNI-06
+SVC-01
+SVC-04
+SVC-06
+SVC-08
+SVC-10
+ATM-01
+ATM-04
+ATM-06
+ATM-07
+SEC-01
+SEC-03
+SEC-05
+SEC-08
+SEC-10
+OBS-01
+OBS-04
+OBS-06

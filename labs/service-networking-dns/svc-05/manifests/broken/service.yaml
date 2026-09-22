@@ -1,0 +1,23 @@
+# Intentionally broken: this is a normal ClusterIP Service, not headless.
+# It correctly selects the StatefulSet's Pods and load-balances across
+# them, but because clusterIP is NOT "None", CoreDNS never creates the
+# per-Pod DNS records (<pod>.web.<namespace>.svc.cluster.local) that
+# StatefulSet Pods rely on for stable peer-to-peer addressing — every Pod
+# other than through kubectl exec would only ever see the single shared
+# VIP, never an individual Pod's own address.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

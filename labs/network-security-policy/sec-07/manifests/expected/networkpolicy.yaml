@@ -1,0 +1,31 @@
+# Reference fix: deny-all-egress (unchanged, from manifests/broken/) plus a
+# second, additive NetworkPolicy that allows only DNS egress to kube-dns in
+# kube-system. NetworkPolicy rules across multiple policies selecting the
+# same Pods are additive (OR'd together), so this correctly narrows "deny
+# everything" down to "deny everything except DNS" without editing the first
+# policy at all.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

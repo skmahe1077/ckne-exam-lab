@@ -1,0 +1,82 @@
+# Starting state: backend answers 200 OK on every path and every method —
+# it does not implement any access control itself. There is deliberately NO
+# CiliumNetworkPolicy yet, so caller and outsider can both reach backend on
+# any path/method right now. The task is to add an L7-aware
+# CiliumNetworkPolicy that is the ONLY thing enforcing "GET /health only,
+# from caller only" — a plain NetworkPolicy cannot express the HTTP-method/
+# path part of this at all.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-nginx-conf
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  default.conf: |
+    server {
+      listen 80;
+      location / {
+        return 200 "ok\n";
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: ${NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: backend
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: backend-nginx-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: ${NAMESPACE}
+  labels:
+    app: backend
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

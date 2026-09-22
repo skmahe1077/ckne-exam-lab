@@ -1,0 +1,27 @@
+# Always-correct: the HTTPRoute is not the broken part of this lab — it
+# attaches to the Gateway's "https" listener by sectionName and forwards
+# to the backend. Getting a response through it end-to-end is exactly how
+# validate.sh proves TLS termination actually works, not just that the
+# Gateway object looks right.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-route
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  parentRefs:
+    - name: atm-gw
+      sectionName: https
+  hostnames:
+    - atm04.ckne.local
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: web
+          port: 80

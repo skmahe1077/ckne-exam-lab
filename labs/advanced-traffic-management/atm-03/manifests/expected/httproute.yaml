@@ -1,0 +1,29 @@
+# Reference fix: weights changed to an 80/20 split (80 to stable, 20 to
+# canary). backendRefs weight is proportional, not a strict percentage
+# (Gateway API distributes traffic in proportion to weight / sum(weights)),
+# so 80/20 here is exactly equivalent to any other 4:1 ratio (e.g. 8/2).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: canary-split
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  parentRefs:
+    - name: atm-gw
+  hostnames:
+    - app.ckne.local
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: stable
+          port: 80
+          weight: 80
+        - name: canary
+          port: 80
+          weight: 20

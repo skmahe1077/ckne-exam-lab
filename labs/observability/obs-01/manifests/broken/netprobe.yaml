@@ -1,0 +1,57 @@
+# Intentionally broken: TARGET_URL points at "backend-svc" (a typo — the real
+# Service is named "backend", see manifests/base/backend.yaml). Every probe
+# loop iteration fails DNS/connection immediately, the container logs a clear
+# error line, and exits non-zero — producing both a readable log line and a
+# Kubernetes Event (Warning/BackOff) for the student to find.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netprobe
+  namespace: ${NAMESPACE}
+  labels:
+    app: netprobe
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: netprobe
+  template:
+    metadata:
+      labels:
+        app: netprobe
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: netprobe
+          image: busybox:1.36
+          env:
+            - name: TARGET_URL
+              value: "http://backend-svc.${NAMESPACE}.svc.cluster.local"
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "netprobe starting, TARGET_URL=$TARGET_URL"
+              if ! wget -q -T 3 -O /dev/null "$TARGET_URL"; then
+                echo "ERROR: failed to reach $TARGET_URL (DNS/connection failure)"
+                exit 1
+              fi
+              echo "OK: reached $TARGET_URL"
+              while true; do
+                if wget -q -T 3 -O /dev/null "$TARGET_URL"; then
+                  echo "OK: reached $TARGET_URL"
+                else
+                  echo "ERROR: failed to reach $TARGET_URL (DNS/connection failure)"
+                  exit 1
+                fi
+                sleep 5
+              done
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi

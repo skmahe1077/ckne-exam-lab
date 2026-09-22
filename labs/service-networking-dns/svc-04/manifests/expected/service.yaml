@@ -1,0 +1,17 @@
+# Reference fix: externalName points at a real, stable, resolvable public
+# DNS name (kubernetes.io). CoreDNS's "kubernetes" plugin passes ExternalName
+# lookups straight through the "forward" plugin to upstream DNS, so any Pod
+# in the cluster resolving docs.<namespace>.svc.cluster.local now gets back
+# a CNAME to kubernetes.io, which then resolves further via the cluster's
+# upstream resolvers (the cluster has outbound internet via its IGW).
+apiVersion: v1
+kind: Service
+metadata:
+  name: docs
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  type: ExternalName
+  externalName: kubernetes.io

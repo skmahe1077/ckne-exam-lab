@@ -1,0 +1,18 @@
+# Mock Exam 2 — 17 tasks, troubleshooting-focused (CNI 3 / SVC 4 / ATM 3 / SEC 4 / OBS 3)
+CNI-01
+CNI-04
+CNI-05
+SVC-02
+SVC-05
+SVC-07
+SVC-09
+ATM-02
+ATM-05
+ATM-08
+SEC-02
+SEC-04
+SEC-07
+SEC-08
+OBS-02
+OBS-05
+OBS-06

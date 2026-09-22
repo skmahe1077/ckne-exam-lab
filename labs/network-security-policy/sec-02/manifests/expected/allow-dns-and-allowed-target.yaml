@@ -1,0 +1,39 @@
+# Reference fix: two egress-allow rules on the client Pod.
+#  1. DNS to CoreDNS in kube-system (UDP+TCP/53) — required because
+#     default-deny-egress also blocks DNS resolution, which client needs
+#     even to look up allowed-svc's ClusterIP by name.
+#  2. TCP/80 to allowed-target's Pods specifically (not blocked-target).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-and-allowed-target
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  podSelector:
+    matchLabels:
+      app: client
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - podSelector:
+            matchLabels:
+              app: allowed-target
+      ports:
+        - protocol: TCP
+          port: 80

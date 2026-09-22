@@ -1,0 +1,19 @@
+# Intentionally broken: JAEGER_QUERY_SVC/JAEGER_COLLECTOR_SVC are the real
+# Service names discovered from the shared Jaeger install (in the
+# observability namespace) by setup.sh — those are correct. But
+# JAEGER_COLLECTOR_PORT points at Jaeger's gRPC collector port (14250),
+# which does not speak the plain HTTP+JSON (Zipkin v2) protocol this lab's
+# trace submission uses. Fix it to the Zipkin-compatible HTTP port (9411).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trace-reporter-config
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  JAEGER_QUERY_SVC: "${JAEGER_QUERY_SVC}"
+  JAEGER_QUERY_PORT: "16686"
+  JAEGER_COLLECTOR_SVC: "${JAEGER_COLLECTOR_SVC}"
+  JAEGER_COLLECTOR_PORT: "14250"

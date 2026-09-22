@@ -1,0 +1,23 @@
+# Reference fix: the "service.cilium.io/global" annotation marks catalog as
+# a ClusterMesh global service. Adding this annotation alone also implicitly
+# sets "service.cilium.io/shared: true" (Cilium's default), meaning this
+# Service's own backends would be shared out to any connected remote cluster
+# too, not just discover remote backends.
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog
+  namespace: ${NAMESPACE}
+  labels:
+    app: catalog
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+  annotations:
+    service.cilium.io/global: "true"
+spec:
+  selector:
+    app: catalog
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

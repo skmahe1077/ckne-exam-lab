@@ -1,0 +1,25 @@
+# Reference fix: podSelector corrected to match the egress-client Deployment's
+# actual Pod label ("app: egress-client"). Everything else — the
+# namespaceSelector, destinationCIDRs, and the egressGateway's nodeSelector
+# (matching the node this lab's setup.sh labeled) — was already correct.
+apiVersion: cilium.io/v2
+kind: CiliumEgressGatewayPolicy
+metadata:
+  name: ckne-atm-05-egress-policy
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selectors:
+    - podSelector:
+        matchLabels:
+          app: egress-client
+      namespaceSelector:
+        matchLabels:
+          ckne.openai.com/lab-id: "${TASK_ID}"
+  destinationCIDRs:
+    - "1.1.1.1/32"
+  egressGateway:
+    nodeSelector:
+      matchLabels:
+        ckne.openai.com/atm-05-egress-node: "true"

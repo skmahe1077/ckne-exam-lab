@@ -1,0 +1,21 @@
+# Reference solution: a namespaced Gateway referencing the shared, cluster-
+# wide GatewayClass "cilium" by name only (never created/edited by this
+# lab), with a single HTTP listener on port 80 restricted to HTTPRoutes in
+# this same namespace.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: svc09-gw
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same

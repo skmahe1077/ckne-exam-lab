@@ -1,0 +1,46 @@
+# Intentionally broken: the readinessProbe checks a path nginx's default
+# image does not serve (it returns 404, not 2xx/3xx), so both containers
+# stay Running but never become Ready. Kubernetes only adds a Pod's address
+# to a Service's EndpointSlice — with conditions.ready == true — once the
+# Pod itself is Ready, so right now neither Pod appears as a usable
+# endpoint and the Service delivers no traffic.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 3
+            failureThreshold: 2
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

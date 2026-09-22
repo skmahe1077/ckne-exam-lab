@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: ${NAMESPACE}
+  labels:
+    app: client
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      # Best-effort (not required) anti-affinity: prefer a different node
+      # than "server" so this exercises real cross-node Pod-to-Pod traffic
+      # when the cluster has enough workers, without ever risking the Pod
+      # going unschedulable if it doesn't.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: server
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: client
+          image: nicolaka/netshoot:latest
+          command: ["sh", "-c", "sleep 3600"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

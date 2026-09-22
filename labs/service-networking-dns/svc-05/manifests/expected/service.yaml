@@ -1,0 +1,25 @@
+# Reference fix: clusterIP: None makes this a headless Service. CoreDNS
+# then creates one DNS record per ready Pod backing it
+# (<pod-name>.web.<namespace>.svc.cluster.local -> that Pod's own IP), which
+# is exactly what a StatefulSet's serviceName is expected to provide.
+#
+# Note: clusterIP is immutable on an existing Service object — you cannot
+# patch it from a real IP to None. The existing broken Service must be
+# deleted and recreated with this definition.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  clusterIP: None
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

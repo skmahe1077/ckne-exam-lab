@@ -1,0 +1,27 @@
+# Intentionally misconfigured (not an outage — the Service routes normally
+# within this cluster): pricing is already a Cluster Mesh global, shared
+# service (service.cilium.io/global and .../shared are correct and are a
+# precondition of this lab, not the task) but its cross-cluster
+# load-balancing AFFINITY is set to "remote" — the opposite of the required
+# policy, which is to prefer LOCAL backends and only fail over to a remote
+# cluster's backends if every local backend is unhealthy.
+apiVersion: v1
+kind: Service
+metadata:
+  name: pricing
+  namespace: ${NAMESPACE}
+  labels:
+    app: pricing
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+  annotations:
+    service.cilium.io/global: "true"
+    service.cilium.io/shared: "true"
+    service.cilium.io/affinity: "remote"
+spec:
+  selector:
+    app: pricing
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

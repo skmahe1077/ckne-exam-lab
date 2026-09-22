@@ -1,0 +1,24 @@
+# Reference fix (2/2): allow-list AuthorizationPolicy selecting only
+# backend, permitting exactly the trusted-caller-sa mesh identity. Once any
+# AuthorizationPolicy selects a workload, that workload becomes default-deny
+# for anything not explicitly listed here — untrusted-caller-sa (a real,
+# mTLS-authenticated mesh identity) is rejected just as much as a caller
+# with no identity at all.
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: backend-allow-trusted-caller
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/${NAMESPACE}/sa/trusted-caller-sa"

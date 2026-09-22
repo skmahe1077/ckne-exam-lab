@@ -1,0 +1,141 @@
+# Shared "streaming-echo" test app — simulates a slow, chunked/streaming
+# backend (e.g. an LLM token stream) WITHOUT deploying any real LLM, per the
+# design brief for ATM-08 (and reusable by any other Advanced Traffic
+# Management lab that needs a deliberately slow/streaming upstream).
+#
+# Endpoints (stdlib-only Python, no pip install / no image build required):
+#   GET /health                    -> instant 200
+#   GET /stream?chunks=5&delay=1   -> chunked response, one chunk every `delay`s
+#   GET /slow?delay=3              -> sleeps `delay`s, then a normal 200 response
+#
+# This file is a template: labs that use it `envsubst` or `kubectl apply -n
+# <lab-namespace>` a copy with NAMESPACE substituted — it is never applied
+# cluster-wide or left running outside a lab's own namespace/lifecycle.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: streaming-echo-app
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+data:
+  server.py: |
+    import http.server
+    import socketserver
+    import time
+    import urllib.parse
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def _params(self):
+            parsed = urllib.parse.urlparse(self.path)
+            return parsed.path, urllib.parse.parse_qs(parsed.query)
+
+        def do_GET(self):
+            path, qs = self._params()
+            if path == "/health":
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"ok\n")
+                return
+
+            if path == "/stream":
+                chunks = int(qs.get("chunks", ["5"])[0])
+                delay = float(qs.get("delay", ["1"])[0])
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain")
+                self.send_header("Transfer-Encoding", "chunked")
+                self.end_headers()
+                for i in range(chunks):
+                    time.sleep(delay)
+                    body = ("chunk-%d\n" % i).encode()
+                    self.wfile.write(("%x\r\n" % len(body)).encode())
+                    self.wfile.write(body)
+                    self.wfile.write(b"\r\n")
+                self.wfile.write(b"0\r\n\r\n")
+                return
+
+            if path == "/slow":
+                delay = float(qs.get("delay", ["3"])[0])
+                time.sleep(delay)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(("slow response after %ss\n" % delay).encode())
+                return
+
+            self.send_response(404)
+            self.end_headers()
+
+        def log_message(self, fmt, *args):
+            print("%s - %s" % (self.address_string(), fmt % args))
+
+    socketserver.TCPServer.allow_reuse_address = True
+    with socketserver.ThreadingTCPServer(("0.0.0.0", 8080), Handler) as httpd:
+        httpd.serve_forever()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streaming-echo
+  namespace: ${NAMESPACE}
+  labels:
+    app: streaming-echo
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: streaming-echo
+  template:
+    metadata:
+      labels:
+        app: streaming-echo
+        app.kubernetes.io/part-of: ckne-hands-on
+        ckne.openai.com/lab-id: "${TASK_ID}"
+    spec:
+      containers:
+        - name: streaming-echo
+          image: python:3.12-slim
+          command: ["python3", "/app/server.py"]
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: app
+              mountPath: /app
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+      volumes:
+        - name: app
+          configMap:
+            name: streaming-echo-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streaming-echo
+  namespace: ${NAMESPACE}
+  labels:
+    app: streaming-echo
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  selector:
+    app: streaming-echo
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

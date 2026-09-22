@@ -1,0 +1,20 @@
+# Reference fix: targetPort corrected to 80, matching the containerPort
+# nginx actually listens on. type: NodePort and the selector were already
+# correct — only targetPort needed to change.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: ${NAMESPACE}
+  labels:
+    app: web
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  type: NodePort
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

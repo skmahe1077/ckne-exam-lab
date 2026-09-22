@@ -1,0 +1,25 @@
+# Reference fix: certificateRefs corrected to name the actual Secret
+# ("ckne-atm-04-tls") that the Certificate object (manifests/base/cert.yaml)
+# produces, rather than the Certificate object's own name.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: atm-gw
+  namespace: ${NAMESPACE}
+  labels:
+    app.kubernetes.io/part-of: ckne-hands-on
+    ckne.openai.com/lab-id: "${TASK_ID}"
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: ckne-atm-04-tls
+      allowedRoutes:
+        namespaces:
+          from: Same

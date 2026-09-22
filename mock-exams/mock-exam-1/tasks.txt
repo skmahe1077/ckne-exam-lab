@@ -1,0 +1,16 @@
+# Mock Exam 1 — 15 tasks, intermediate, domain-weighted (CNI 2 / SVC 4 / ATM 3 / SEC 4 / OBS 2)
+CNI-01
+CNI-04
+SVC-01
+SVC-03
+SVC-06
+SVC-08
+ATM-01
+ATM-03
+ATM-04
+SEC-01
+SEC-03
+SEC-06
+SEC-09
+OBS-01
+OBS-03
