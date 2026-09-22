@@ -27,16 +27,25 @@ explains what each step actually does.
 * `jq`, `envsubst` (from `gettext`), `bash` available locally.
 * `make` (optional but convenient — wraps every script below).
 
-## 1. Configure
+## 1. Configure (optional)
+
+`cluster.env` is git-ignored and is the single source of truth for region,
+sizing, CIDRs, and access control (`ALLOWED_ADMIN_CIDR`, `ENABLE_SSH`). You
+don't have to create it yourself — the first script that needs it
+(`aws-infra-setup.sh`, via `load_cluster_env`) creates it automatically from
+`cluster.env.example` if it doesn't exist yet, and `aws-infra-setup.sh`
+auto-fills `ALLOWED_ADMIN_CIDR` with your current public IP if it's still
+empty, so you get direct `kubectl`/SSH access with zero manual steps.
+
+Edit it any time you want something other than the defaults (region,
+instance sizes, CIDRs, `EC2_KEY_NAME` for the SSH fallback):
 
 ```bash
 cp kubeadm-setup/config/cluster.env.example kubeadm-setup/config/cluster.env
 $EDITOR kubeadm-setup/config/cluster.env
 ```
 
-`cluster.env` is git-ignored and is the single source of truth for region,
-sizing, CIDRs, and access control (`ALLOWED_ADMIN_CIDR`, `ENABLE_SSH`). See
-inline comments in `cluster.env.example` for every field.
+See inline comments in `cluster.env.example` for every field.
 
 ## 2. Create AWS infrastructure
 
@@ -126,9 +135,11 @@ kubectl get nodes -o wide
 
 The kubeconfig is fetched over SSM (never SCP/SSH) and written locally with
 `0600` permissions; the filename matches the `kubeconfig*` pattern in
-`.gitignore` and must never be committed. If `ALLOWED_ADMIN_CIDR` is unset,
-the API server stays private-only — reach it via an SSM port-forwarding
-session instead (the script prints the exact command).
+`.gitignore` and must never be committed. `ALLOWED_ADMIN_CIDR` is normally
+auto-filled with your public IP by `aws-infra-setup.sh` (see step 1), so this
+works out of the box; if it's still unset (auto-detection failed and you
+didn't set one by hand), the API server stays private-only — reach it via an
+SSM port-forwarding session instead (the script prints the exact command).
 
 ## 6. Verify
 

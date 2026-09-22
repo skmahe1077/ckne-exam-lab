@@ -19,27 +19,27 @@ CDK, EKS, kind, Minikube, k3s, or MicroK8s anywhere in this repository.
 ## Quick start
 
 ```bash
-# 1. Configure
-cp kubeadm-setup/config/cluster.env.example kubeadm-setup/config/cluster.env
-$EDITOR kubeadm-setup/config/cluster.env
-
-# 2. Create AWS infrastructure (idempotent — safe to re-run)
+# 1. Create AWS infrastructure (idempotent — safe to re-run)
+# cluster.env is created from cluster.env.example automatically on first run,
+# with sane defaults and your public IP auto-filled into ALLOWED_ADMIN_CIDR
+# for direct kubectl/SSH access. Edit kubeadm-setup/config/cluster.env
+# any time you want to change region, sizing, or CIDRs.
 make aws-create
 
-# 3. Bootstrap Kubernetes (kubeadm init/join, Cilium + Hubble)
+# 2. Bootstrap Kubernetes (kubeadm init/join, Cilium + Hubble)
 make cluster-bootstrap
 
-# 4. Install the remaining shared add-ons
+# 3. Install the remaining shared add-ons
 make addons-install
 
-# 5. Get kubectl access from your laptop
+# 4. Get kubectl access from your laptop
 make kubeconfig
 export KUBECONFIG=kubeadm-setup/ckne-cluster.kubeconfig
 
-# 6. Verify
+# 5. Verify
 make cluster-verify
 
-# 7. Run your first lab
+# 6. Run your first lab
 make start    LAB=CNI-01
 make validate LAB=CNI-01
 make cleanup  LAB=CNI-01

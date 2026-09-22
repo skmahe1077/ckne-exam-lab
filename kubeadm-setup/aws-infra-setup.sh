@@ -27,6 +27,7 @@ require_cmd aws jq
 load_cluster_env
 refresh_project_tag_filters
 verify_aws_identity
+ensure_allowed_admin_cidr
 
 log_step "Discovering Ubuntu 24.04 AMI via SSM public parameter"
 AMI_ID="$(discover_ubuntu_ami_id)"

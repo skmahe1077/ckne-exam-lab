@@ -40,10 +40,9 @@ require_cmd() {
 
 load_cluster_env() {
   if [[ ! -f "$CLUSTER_ENV_FILE" ]]; then
-    log_fatal "Cluster config not found: $CLUSTER_ENV_FILE
-  Create it first:
-    cp kubeadm-setup/config/cluster.env.example kubeadm-setup/config/cluster.env
-  then edit values as needed."
+    local example="$KUBEADM_SETUP_DIR/config/cluster.env.example"
+    log_info "cluster.env not found — creating it from cluster.env.example (defaults for everything; edit $CLUSTER_ENV_FILE any time to customize)."
+    cp "$example" "$CLUSTER_ENV_FILE"
   fi
   set -a
   # shellcheck disable=SC1090
@@ -63,6 +62,23 @@ load_cluster_env() {
   if [[ "${ENABLE_SSH:-false}" == "true" && -z "${EC2_KEY_NAME:-}" ]]; then
     log_fatal "ENABLE_SSH=true requires EC2_KEY_NAME to be set to an existing EC2 key pair name."
   fi
+}
+
+ensure_allowed_admin_cidr() {
+  [[ -n "${ALLOWED_ADMIN_CIDR:-}" ]] && return 0
+
+  local my_ip
+  my_ip="$(curl -s --max-time 5 https://checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]')"
+  if [[ ! "$my_ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+    log_warn "ALLOWED_ADMIN_CIDR is not set and auto-detecting your public IP failed — the API server will stay SSM-only (no direct kubectl/SSH from this machine). Set ALLOWED_ADMIN_CIDR in $CLUSTER_ENV_FILE to fix this."
+    return 0
+  fi
+
+  ALLOWED_ADMIN_CIDR="${my_ip}/32"
+  export ALLOWED_ADMIN_CIDR
+  sed -i.bak "s#^ALLOWED_ADMIN_CIDR=.*#ALLOWED_ADMIN_CIDR=\"${ALLOWED_ADMIN_CIDR}\"#" "$CLUSTER_ENV_FILE"
+  rm -f "${CLUSTER_ENV_FILE}.bak"
+  log_info "ALLOWED_ADMIN_CIDR was empty — auto-detected your public IP and saved it to cluster.env: $ALLOWED_ADMIN_CIDR"
 }
 
 verify_aws_identity() {
