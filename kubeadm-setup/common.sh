@@ -182,7 +182,7 @@ systemctl enable kubelet
 # ── Verification ─────────────────────────────────────────────────────────────
 log "Verifying installation"
 containerd --version
-runc --version | head -n1
+runc --version | { head -n1; cat >/dev/null; }
 crictl --version
 kubeadm version -o short
 kubectl version --client -o yaml | grep gitVersion

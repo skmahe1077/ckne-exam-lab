@@ -202,7 +202,7 @@ fi
 echo "install-addons.sh completed (--only=${ONLY:-all})"
 } > "$REMOTE_SCRIPT"
 
-sed -i.bak "s/__POD_CIDR__/${POD_CIDR}/" "$REMOTE_SCRIPT"
+sed -i.bak "s#__POD_CIDR__#${POD_CIDR}#" "$REMOTE_SCRIPT"
 rm -f "${REMOTE_SCRIPT}.bak"
 
 remote_run "$CP_ID" "$REMOTE_SCRIPT" "install-addons(${ONLY})"

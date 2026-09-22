@@ -16,11 +16,22 @@ ssm_run() {
   local comment="${3:-$(basename "$script_path")}"
   require_cmd jq
 
-  local params_file
+  local params_file wrapped_script
   params_file="$(mktemp)"
-  trap '[[ -n "${params_file:-}" ]] && rm -f "$params_file"' RETURN
+  wrapped_script="$(mktemp)"
+  trap '[[ -n "${params_file:-}" ]] && rm -f "$params_file" "$wrapped_script"' RETURN
 
-  jq -n --rawfile script "$script_path" \
+  # AWS-RunShellScript executes commands via /bin/sh (dash on Ubuntu), which
+  # ignores our scripts' `#!/usr/bin/env bash` shebang (it's not run as an
+  # executable file) and lacks `set -o pipefail`. Force real bash via a
+  # quoted heredoc so bash-isms in the uploaded script work as intended.
+  {
+    printf "bash <<'CKNE_SSM_EOF'\n"
+    cat "$script_path"
+    printf '\nCKNE_SSM_EOF\n'
+  } > "$wrapped_script"
+
+  jq -n --rawfile script "$wrapped_script" \
     '{commands: ($script | split("\n"))}' > "$params_file"
 
   local command_id

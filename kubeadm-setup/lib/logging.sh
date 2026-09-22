@@ -18,15 +18,15 @@ else
 fi
 
 log_step() {
-  printf '\n%s==> %s%s\n' "$LOG_COLOR_INFO" "$*" "$LOG_COLOR_RESET"
+  printf '\n%s==> %s%s\n' "$LOG_COLOR_INFO" "$*" "$LOG_COLOR_RESET" >&2
 }
 
 log_info() {
-  printf '%s[INFO]%s  %s\n' "$LOG_COLOR_INFO" "$LOG_COLOR_RESET" "$*"
+  printf '%s[INFO]%s  %s\n' "$LOG_COLOR_INFO" "$LOG_COLOR_RESET" "$*" >&2
 }
 
 log_ok() {
-  printf '%s[OK]%s    %s\n' "$LOG_COLOR_OK" "$LOG_COLOR_RESET" "$*"
+  printf '%s[OK]%s    %s\n' "$LOG_COLOR_OK" "$LOG_COLOR_RESET" "$*" >&2
 }
 
 log_warn() {
