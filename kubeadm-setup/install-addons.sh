@@ -199,7 +199,7 @@ kubectl -n cert-manager rollout status deployment/cert-manager --timeout=180s
 CERTM
 fi
 
-echo "install-addons.sh completed (--only=${ONLY:-all})"
+printf 'echo "install-addons.sh completed (--only=%s)"\n' "${ONLY:-all}"
 } > "$REMOTE_SCRIPT"
 
 sed -i.bak "s#__POD_CIDR__#${POD_CIDR}#" "$REMOTE_SCRIPT"
