@@ -39,6 +39,7 @@ if [[ -f /etc/kubernetes/admin.conf ]]; then
   log "Control plane already initialized — skipping kubeadm init."
 else
   log "Running kubeadm init"
+  mkdir -p /var/log/kubernetes
   kubeadm init --config="$KUBEADM_CONFIG" --upload-certs
 fi
 

@@ -25,7 +25,7 @@ load_cluster_env
 refresh_project_tag_filters
 verify_aws_identity
 
-CP_ID="$(find_instances_by_role control-plane | head -n1)"
+CP_ID="$(find_instances_by_role control-plane | { head -n1; cat >/dev/null; })"
 [[ -z "$CP_ID" ]] && log_fatal "No control-plane instance found."
 
 log_step "Verifying cluster on control plane ${CP_ID}"

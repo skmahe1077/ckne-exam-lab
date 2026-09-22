@@ -31,7 +31,7 @@ verify_aws_identity
 
 # ── 1. Discover nodes by project tags ────────────────────────────────────────
 log_step "1/15 Discovering cluster nodes"
-CP_ID="$(find_instances_by_role control-plane | head -n1)"
+CP_ID="$(find_instances_by_role control-plane | { head -n1; cat >/dev/null; })"
 WORKER_IDS=( $(find_instances_by_role worker) )
 
 if [[ -z "$CP_ID" ]]; then
