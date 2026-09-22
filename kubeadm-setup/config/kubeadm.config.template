@@ -6,8 +6,14 @@
 # advertiseAddress/controlPlaneEndpoint here; the values below are
 # substituted from shell environment variables set by cluster-bootstrap.sh:
 #
-#   ADVERTISE_ADDRESS      private IPv4 of the control-plane node
-#   CONTROL_PLANE_ENDPOINT ADVERTISE_ADDRESS:6443
+#   ADVERTISE_ADDRESS       private IPv4 of the control-plane node
+#   CONTROL_PLANE_ENDPOINT  ADVERTISE_ADDRESS:6443
+#   CONTROL_PLANE_PUBLIC_IP public IPv4 of the control-plane node, or the
+#                           private IP again if it has none — added to
+#                           apiServer.certSANs so the API server cert is
+#                           valid when reached via ALLOWED_ADMIN_CIDR from
+#                           outside the VPC (download-kubeconfig.sh rewrites
+#                           the kubeconfig server URL to this address).
 #   NODE_NAME               control-plane instance's hostname
 #   KUBERNETES_VERSION_FULL e.g. 1.35.0
 #   POD_CIDR
@@ -28,6 +34,9 @@ kind: ClusterConfiguration
 kubernetesVersion: "v${KUBERNETES_VERSION_FULL}"
 controlPlaneEndpoint: "${CONTROL_PLANE_ENDPOINT}"
 apiServer:
+  certSANs:
+    - "${ADVERTISE_ADDRESS}"
+    - "${CONTROL_PLANE_PUBLIC_IP}"
   extraArgs:
     - name: "enable-admission-plugins"
       value: "NodeRestriction"

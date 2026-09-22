@@ -80,6 +80,7 @@ done
 log_step "4/15 Generating kubeadm configuration"
 CP_PRIVATE_IP="$(instance_private_ip "$CP_ID")"
 [[ -z "$CP_PRIVATE_IP" || "$CP_PRIVATE_IP" == "None" ]] && log_fatal "Could not determine control-plane private IP"
+CP_PUBLIC_IP="$(instance_public_ip "$CP_ID")"
 
 VERSION_OUT="$(remote_run "$CP_ID" <(printf 'kubeadm version -o short\n') "kubeadm-version")"
 KUBERNETES_VERSION_FULL="$(printf '%s' "$VERSION_OUT" | tr -d '\r' | tail -n1 | sed 's/^v//')"
@@ -88,6 +89,7 @@ log_info "Installed Kubernetes version: v${KUBERNETES_VERSION_FULL}"
 
 export ADVERTISE_ADDRESS="$CP_PRIVATE_IP"
 export CONTROL_PLANE_ENDPOINT="${CP_PRIVATE_IP}:6443"
+export CONTROL_PLANE_PUBLIC_IP="${CP_PUBLIC_IP:-$CP_PRIVATE_IP}"
 export NODE_NAME="$CONTROL_PLANE_NAME"
 export KUBERNETES_VERSION_FULL
 export POD_CIDR

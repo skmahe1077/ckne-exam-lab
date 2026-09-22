@@ -169,12 +169,13 @@ remote_run() {
 
 # render_kubeadm_config <output-path>
 # Renders config/kubeadm.config.template using the current shell environment
-# (ADVERTISE_ADDRESS, CONTROL_PLANE_ENDPOINT, NODE_NAME, KUBERNETES_VERSION_FULL,
-# POD_CIDR, SERVICE_CIDR must already be exported by the caller).
+# (ADVERTISE_ADDRESS, CONTROL_PLANE_ENDPOINT, CONTROL_PLANE_PUBLIC_IP,
+# NODE_NAME, KUBERNETES_VERSION_FULL, POD_CIDR, SERVICE_CIDR must already be
+# exported by the caller).
 render_kubeadm_config() {
   local out_path="$1"
   local template="$KUBEADM_SETUP_DIR/config/kubeadm.config.template"
   require_cmd envsubst
-  envsubst '${ADVERTISE_ADDRESS} ${CONTROL_PLANE_ENDPOINT} ${NODE_NAME} ${KUBERNETES_VERSION_FULL} ${POD_CIDR} ${SERVICE_CIDR}' \
+  envsubst '${ADVERTISE_ADDRESS} ${CONTROL_PLANE_ENDPOINT} ${CONTROL_PLANE_PUBLIC_IP} ${NODE_NAME} ${KUBERNETES_VERSION_FULL} ${POD_CIDR} ${SERVICE_CIDR}' \
     < "$template" > "$out_path"
 }
