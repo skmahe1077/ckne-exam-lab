@@ -1,51 +1,48 @@
-Task ID: SEC-09
-Domain: Network Security and Policy
-Difficulty: advanced
-Estimated time: 35 minutes
-Cluster: ckne-hands-on (kubeadm, 1 control-plane + 2 workers, Cilium CNI)
-Host: control plane (kubectl runs against the cluster; no SSH required)
-Context: default (uses your current kubeconfig context)
-Namespace: ckne-sec-09
+# CKNE-SEC-09
 
-Scenario:
-  `ckne-sec-09` has a `backend` Service fronting a `backend-workload`
-  Deployment. Nothing cert-manager-related exists yet. A dedicated
-  `ServiceAccount`, `backend-identity`, already exists in the namespace, but
-  `backend-workload`'s Pods are not actually using it — they are still
-  running under the implicit `default` ServiceAccount.
+**Task ID:** CKNE-SEC-09
+**Domain:** Network Security and Policy
+**Difficulty:** Advanced
+**Estimated time:** 35 minutes
+**Weight:** 2.5%
+**Cluster:** ckne-hands-on
+**Namespace:** ckne-sec-09
+**Context:** default
 
-Objective:
-  Part A — create a working TLS certificate chain: a namespace-scoped,
-  self-signed `Issuer` and a `Certificate` requesting a TLS keypair for the
-  `backend` Service, and confirm cert-manager genuinely issues it. Part B —
-  get `backend-workload`'s Pods running under the `backend-identity`
-  ServiceAccount instead of `default`.
+## Scenario
 
-Requirements (Part A — cert-manager, namespace-scoped, no lock):
-  1. Create an `Issuer` (NOT a `ClusterIssuer`) named `ckne-sec-09-issuer`
-     in `ckne-sec-09`, using `selfSigned: {}`.
-  2. Create a `Certificate` in `ckne-sec-09` that references that `Issuer`
-     and requests a keypair for `backend.ckne-sec-09.svc.cluster.local`,
-     stored in a Secret you name (e.g. `backend-tls`).
-  3. Confirm the `Certificate` reports `Ready: True`.
-  4. Confirm the target Secret actually contains non-empty `tls.crt` and
-     `tls.key` data — a `Ready` `Certificate` with an empty Secret would
-     still be a failure.
+`ckne-sec-09` has a `backend` Service fronting a `backend-workload` Deployment. Nothing cert-manager-related exists yet. A dedicated `ServiceAccount`, `backend-identity`, already exists in the namespace, but `backend-workload`'s Pods are not actually using it — they are still running under the implicit `default` ServiceAccount.
 
-Requirements (Part B — ServiceAccount identity, namespace-scoped, no lock):
-  1. Do not create a new ServiceAccount — `backend-identity` already
-     exists.
-  2. Update `backend-workload` so its Pod template sets
-     `spec.serviceAccountName: backend-identity`.
-  3. Do not change any RBAC objects, `backend-identity` itself, or the
-     Service.
-  4. `backend-workload` must return to Ready after the change, now running
-     under the correct identity.
+## Objective
 
-Verification criteria:
-  - `Issuer` `ckne-sec-09-issuer` exists in `ckne-sec-09` and is `Ready`.
-  - `Certificate` in `ckne-sec-09` reports `Ready: True`.
-  - Its target Secret contains non-empty `tls.crt` and `tls.key`.
-  - Deployment `backend-workload` is Ready.
-  - `backend-workload`'s Pod(s) report `spec.serviceAccountName ==
-    backend-identity` (not `default`).
+Part A — create a working TLS certificate chain: a namespace-scoped, self-signed `Issuer` and a `Certificate` requesting a TLS keypair for the `backend` Service, and confirm cert-manager genuinely issues it. Part B — get `backend-workload`'s Pods running under the `backend-identity` ServiceAccount instead of `default`.
+
+## Requirements
+
+**Part A — cert-manager (namespace-scoped, no lock):**
+
+- Create an `Issuer` (NOT a `ClusterIssuer`) named `ckne-sec-09-issuer` in `ckne-sec-09`, using `selfSigned: {}`.
+- Create a `Certificate` in `ckne-sec-09` that references that `Issuer` and requests a keypair for `backend.ckne-sec-09.svc.cluster.local`, stored in a Secret you name (e.g. `backend-tls`).
+- Confirm the `Certificate` reports `Ready: True`.
+- Confirm the target Secret actually contains non-empty `tls.crt` and `tls.key` data — a `Ready` `Certificate` with an empty Secret would still be a failure.
+
+**Part B — ServiceAccount identity (namespace-scoped, no lock):**
+
+- Do not create a new ServiceAccount — `backend-identity` already exists.
+- Update `backend-workload` so its Pod template sets `spec.serviceAccountName: backend-identity`.
+- Do not change any RBAC objects, `backend-identity` itself, or the Service.
+- `backend-workload` must return to Ready after the change, now running under the correct identity.
+
+## Verification criteria
+
+- `Issuer` `ckne-sec-09-issuer` exists in `ckne-sec-09` and is `Ready`.
+- `Certificate` in `ckne-sec-09` reports `Ready: True`.
+- Its target Secret contains non-empty `tls.crt` and `tls.key`.
+- Deployment `backend-workload` is Ready.
+- `backend-workload`'s Pod(s) report `spec.serviceAccountName == backend-identity` (not `default`).
+
+## Permitted references
+
+- cert-manager Issuer/Certificate concepts — https://cert-manager.io/docs/concepts/
+- cert-manager self-signed issuer — https://cert-manager.io/docs/configuration/selfsigned/
+- Kubernetes ServiceAccounts — https://kubernetes.io/docs/concepts/security/service-accounts/
