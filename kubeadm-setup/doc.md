@@ -161,3 +161,35 @@ make cleanup LAB=CNI-01
 
 Always tear down (or at least `make aws-stop`) when you're done practicing,
 to avoid ongoing AWS charges.
+
+---
+
+## Reliability notes
+
+This flow has been run end-to-end against a real AWS account. A few
+non-obvious pitfalls were found and fixed along the way — worth knowing if
+you're editing these scripts:
+
+* **SSM Run Command executes via `/bin/sh` (dash on Ubuntu), not bash.**
+  Any script uploaded to a node this way has its `#!/usr/bin/env bash`
+  shebang silently ignored (it's not exec'd as a file) and dash doesn't
+  support `set -o pipefail`. `lib/kubernetes.sh`'s `ssm_run` wraps every
+  uploaded script in a quoted `bash <<'EOF' ... EOF` heredoc so bash-isms
+  and `pipefail` actually work. Don't remove that wrapper.
+* **`some-command | head -n1` can SIGPIPE the producer under `pipefail`.**
+  `head` closes its end of the pipe once it has its line; if the producer
+  is still writing, it can be killed with SIGPIPE (exit 141), which
+  `pipefail` then reports as the pipeline's failure — even though the
+  output you wanted was already printed. This is racy, not deterministic
+  (it hit one node out of three in testing). The fix used throughout this
+  codebase is `cmd | { head -n1; cat >/dev/null; }`, which drains the rest
+  of the pipe instead of closing it early.
+* **`kubeadm.config.template`'s `audit-log-path` requires the parent
+  directory to exist first.** `kube-apiserver` doesn't create
+  `/var/log/kubernetes/` itself; `control-plane-setup.sh` runs
+  `mkdir -p /var/log/kubernetes` immediately before `kubeadm init` for
+  this reason — without it, control-plane init fails outright.
+* **`sed`'s delimiter must not collide with the substituted value.**
+  `install-addons.sh` templates `POD_CIDR` (e.g. `10.244.0.0/16`, which
+  contains `/`) into a manifest locally before upload; it uses `#` as the
+  `sed` delimiter rather than `/` for this reason.
